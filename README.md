@@ -16,11 +16,8 @@ The app isn't code-signed, so Windows SmartScreen may warn the first time. Click
 
 ## Run from source
 
-You need:
-1. **Python 3.10 or newer.** Current yt-dlp no longer supports 3.9.
-2. That's it. YouTube now requires solving a JavaScript challenge before it serves a video, and the requirements include the official Deno runtime for that, installed through pip.
+You need **Python 3.10 or newer** (current yt-dlp no longer supports 3.9) and nothing else. YouTube now requires solving a JavaScript challenge before it serves a video, and the requirements include the official Deno runtime for that.
 
-Then:
 
 ```bash
 pip install -r requirements.txt
