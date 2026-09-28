@@ -124,7 +124,8 @@ class HelperTests(unittest.TestCase):
             code = ytdl.main([ZOO, "--mp3", "-o", "/tmp/music", "--no-playlist"])
         self.assertEqual(code, 0)
         urls, folder, audio, quality, playlist, _ = calls[0]
-        self.assertEqual((urls, folder, audio, quality, playlist), ([ZOO], "/tmp/music", True, "best", False))
+        self.assertEqual((urls, folder, audio, quality, playlist),
+                         ([ZOO], os.path.abspath("/tmp/music"), True, "best", False))
 
     def test_cli_mp3_and_mp4_flags(self):
         seen = []
@@ -284,7 +285,7 @@ class ServerTests(unittest.TestCase):
     def test_change_folder(self):
         status, data = self.post("/api/folder", {"folder": "~/Music"})
         self.assertEqual(status, 200)
-        self.assertEqual(data["folder"], os.path.expanduser("~/Music"))
+        self.assertEqual(data["folder"], os.path.abspath(os.path.expanduser("~/Music")))
         self.assertEqual(self.post("/api/folder", {"folder": ""})[0], 400)
 
 
