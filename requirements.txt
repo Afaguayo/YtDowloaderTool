@@ -1,0 +1,4 @@
+yt-dlp[default]>=2026.8.19  # the download engine; [default] adds its YouTube challenge solver
+deno>=2.9                   # JavaScript runtime yt-dlp needs for YouTube (the official Deno binary)
+imageio-ffmpeg>=0.6         # a bundled ffmpeg for merging HD video and making MP3s
+pywebview>=5.4              # native window for gui.py; without it the app opens in your browser
