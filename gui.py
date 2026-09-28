@@ -207,12 +207,62 @@ class WindowApi:
         return result[0] if result else None
 
 
+def selftest(report_path, download=False):
+    """Check that everything the app needs is present (used on the built .exe).
+
+    The .exe has no console, so results go to report_path. Returns an exit code.
+    """
+    lines, ok = [], True
+
+    def check(name, func):
+        nonlocal ok
+        try:
+            lines.append(f"ok    {name}: {func()}")
+        except Exception as exc:                      # report every failure, keep going
+            ok = False
+            lines.append(f"FAIL  {name}: {exc}")
+
+    def version(program):
+        path = {"ffmpeg": ytdl.find_ffmpeg, "deno": ytdl.find_deno}[program]()
+        if not path:
+            raise FileNotFoundError(f"{program} not found")
+        flag = "-version" if program == "ffmpeg" else "--version"
+        out = subprocess.run([path, flag], capture_output=True, text=True, timeout=60,
+                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout
+        return out.splitlines()[0] if out else path
+
+    def modules():
+        import yt_dlp
+        import yt_dlp_ejs  # noqa: F401  (YouTube challenge solver scripts)
+        return f"yt-dlp {yt_dlp.version.__version__}"
+
+    check("interface", lambda: os.path.getsize(INDEX) and INDEX)
+    check("yt-dlp", modules)
+    check("ffmpeg", lambda: version("ffmpeg"))
+    check("deno", lambda: version("deno"))
+    if download:
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            def fetch():
+                ytdl.download(["https://www.youtube.com/watch?v=jNQXAC9IVRw"], folder, audio=True)
+                return ", ".join(os.listdir(folder))
+            check("download", fetch)
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+    return 0 if ok else 1
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--browser", action="store_true", help="open in the default browser instead of a window")
     ap.add_argument("--port", type=int, default=0, help="port for the local server (default: any free port)")
     ap.add_argument("--serve", action="store_true", help=argparse.SUPPRESS)  # server only, for testing
+    ap.add_argument("--selftest", metavar="REPORT", help=argparse.SUPPRESS)  # check a build
+    ap.add_argument("--selftest-download", action="store_true", help=argparse.SUPPRESS)
     args = ap.parse_args()
+
+    if args.selftest:
+        sys.exit(selftest(args.selftest, args.selftest_download))
 
     downloads = Downloads()
     server = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(downloads))  # localhost only

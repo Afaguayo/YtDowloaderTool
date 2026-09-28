@@ -122,7 +122,7 @@
 <body>
 <main>
   <h1><span class="logo"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 1l9 5-9 5z" fill="#fff"/></svg></span>YT Downloader</h1>
-  <div class="subtitle">Paste a YouTube link to save the video or just its audio.</div>
+  <div class="subtitle">Paste a YouTube link to save it as an MP4 video or MP3 audio.</div>
 
   <div class="panel">
     <div class="field">
@@ -139,15 +139,15 @@
 
     <div class="options">
       <div class="segmented" role="group" aria-label="What to download">
-        <button type="button" id="mode-video" class="on">Video</button>
-        <button type="button" id="mode-audio">Audio (MP3)</button>
+        <button type="button" id="mode-video" class="on">MP4 · Video</button>
+        <button type="button" id="mode-audio">MP3 · Audio</button>
       </div>
       <select id="quality" aria-label="Quality"></select>
       <span class="spacer"></span>
       <button class="btn" id="go" disabled>Download</button>
     </div>
     <div class="notice" id="ffmpeg-notice">
-      ffmpeg wasn't found, so video is limited to single-file formats (usually 720p or lower) and audio is saved as M4A instead of MP3. Fix it with <code>pip install imageio-ffmpeg</code>.
+      ffmpeg wasn't found, so video is limited to single-file formats (usually 720p or lower) and audio is saved as M4A instead of MP3. Fix it with <code>pip install -r requirements.txt</code>.
     </div>
   </div>
 
@@ -297,7 +297,7 @@ function render() {
       ${job.thumbnail ? `<img class="thumb" src="${esc(job.thumbnail)}" alt="">` : '<div class="thumb"></div>'}
       <div class="meta">
         <div class="title">${esc(job.title)}</div>
-        <div class="sub">${job.audio ? "Audio" : "Video" + (job.quality !== "best" ? " · " + esc(job.quality) + "p" : "")} · ${esc(statusLine(job))}</div>
+        <div class="sub">${job.audio ? "MP3" : "MP4" + (job.quality !== "best" ? " · " + esc(job.quality) + "p" : "")} · ${esc(statusLine(job))}</div>
         <div class="bar"><div style="width:${job.state === "error" ? 0 : Math.max(2, job.percent || 0)}%"></div></div>
       </div>
     </div>`).join("");

@@ -41,6 +41,7 @@ class OptionTests(unittest.TestCase):
         opts = ytdl.format_options(False, "720", "/usr/bin/ffmpeg")
         self.assertEqual(opts["format"], "bestvideo[height<=720]+bestaudio/best[height<=720]/best")
         self.assertEqual(opts["merge_output_format"], "mp4")
+        self.assertEqual(opts["format_sort"], ["res", "vcodec:h264", "acodec:m4a"])
 
     def test_video_best_has_no_height_limit(self):
         self.assertNotIn("height", ytdl.format_options(False, "best", "ffmpeg")["format"])
@@ -72,9 +73,11 @@ class OptionTests(unittest.TestCase):
             ytdl.build_options("/tmp", quality="999")
 
     def test_js_runtime_detection(self):
-        with mock.patch("shutil.which", side_effect=lambda name: "/bin/node" if name == "node" else None):
+        with mock.patch.object(ytdl, "find_deno", return_value=None), \
+                mock.patch("shutil.which", side_effect=lambda name: "/bin/node" if name == "node" else None):
             self.assertEqual(ytdl.js_runtimes(), {"node": {}})
-        with mock.patch("shutil.which", return_value=None):
+        with mock.patch.object(ytdl, "find_deno", return_value=None), \
+                mock.patch("shutil.which", return_value=None):
             self.assertEqual(ytdl.js_runtimes(), {"deno": {}})
 
 
@@ -118,10 +121,36 @@ class HelperTests(unittest.TestCase):
         calls = []
         with mock.patch.object(ytdl, "download", side_effect=lambda *a: calls.append(a)), \
                 mock.patch("sys.stderr"):
-            code = ytdl.main([ZOO, "--audio", "-o", "/tmp/music", "--no-playlist"])
+            code = ytdl.main([ZOO, "--mp3", "-o", "/tmp/music", "--no-playlist"])
         self.assertEqual(code, 0)
         urls, folder, audio, quality, playlist, _ = calls[0]
         self.assertEqual((urls, folder, audio, quality, playlist), ([ZOO], "/tmp/music", True, "best", False))
+
+    def test_cli_mp3_and_mp4_flags(self):
+        seen = []
+        with mock.patch.object(ytdl, "download", side_effect=lambda *a: seen.append(a[2])), \
+                mock.patch("sys.stderr"):
+            ytdl.main([ZOO])
+            ytdl.main([ZOO, "--mp4"])
+            ytdl.main([ZOO, "--mp3"])
+            with self.assertRaises(SystemExit):
+                ytdl.main([ZOO, "--mp3", "--mp4"])
+        self.assertEqual(seen, [False, False, True])
+
+    def test_js_runtime_prefers_deno_with_path(self):
+        with mock.patch.object(ytdl, "find_deno", return_value="/opt/deno"):
+            self.assertEqual(ytdl.js_runtimes(), {"deno": {"path": "/opt/deno"}})
+
+    def test_bundled_programs_in_exe(self):
+        with tempfile.TemporaryDirectory() as base:
+            os.makedirs(os.path.join(base, "bin"))
+            name = "ffmpeg.exe" if ytdl.sys.platform == "win32" else "ffmpeg"
+            open(os.path.join(base, "bin", name), "w").close()
+            with mock.patch.object(ytdl.sys, "_MEIPASS", base, create=True):
+                self.assertEqual(ytdl.bundled("ffmpeg"), os.path.join(base, "bin", name))
+                self.assertEqual(ytdl.find_ffmpeg(), os.path.join(base, "bin", name))
+                self.assertIsNone(ytdl.bundled("deno"))
+        self.assertIsNone(ytdl.bundled("ffmpeg"))       # not running as an .exe
 
     def test_cli_reports_errors(self):
         with mock.patch.object(ytdl, "download", side_effect=ytdl.DownloadError("Video unavailable")), \
