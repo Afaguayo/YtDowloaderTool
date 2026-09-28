@@ -1,0 +1,3 @@
+yt-dlp[default]>=2026.8  # the download engine; [default] adds its YouTube challenge solver
+imageio-ffmpeg>=0.5     # a bundled ffmpeg for merging HD video and making MP3s
+pywebview>=5            # native window for gui.py; without it the app opens in your browser
