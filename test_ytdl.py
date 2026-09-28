@@ -99,6 +99,10 @@ class HelperTests(unittest.TestCase):
         self.assertEqual(ytdl.clean_error("ERROR: [youtube] jNQXAC9IVRw: Video unavailable"),
                          "Video unavailable")
         self.assertEqual(ytdl.clean_error("ERROR: Unable to download"), "Unable to download")
+        bot = ("ERROR: [youtube] jNQXAC9IVRw: Sign in to confirm you’re not a bot. Use --cookies-from-browser "
+               "or --cookies for the authentication.")
+        self.assertIn("VPN", ytdl.clean_error(bot))
+        self.assertEqual(ytdl.clean_error("ERROR: [youtube] x: Private video. Sign in"), "This video is private.")
 
     def test_quiet_logger_keeps_errors(self):
         logger = ytdl.QuietLogger()

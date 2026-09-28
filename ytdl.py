@@ -200,8 +200,21 @@ def _first_thumbnail(info):
     return thumbs[-1]["url"] if thumbs else None
 
 
+FRIENDLY_ERRORS = {
+    "confirm you’re not a bot": "YouTube wants to confirm you're not a bot. This happens on VPNs "
+                                "and shared or cloud networks: turn off your VPN or try again later.",
+    "confirm you're not a bot": "YouTube wants to confirm you're not a bot. This happens on VPNs "
+                                "and shared or cloud networks: turn off your VPN or try again later.",
+    "Private video": "This video is private.",
+    "Sign in to confirm your age": "This video is age-restricted, so YouTube requires signing in.",
+}
+
+
 def clean_error(exc):
     """yt-dlp errors start with 'ERROR: [youtube] id: '; keep the useful part."""
+    for phrase, friendly in FRIENDLY_ERRORS.items():
+        if phrase in str(exc):
+            return friendly
     text = str(exc).replace("ERROR: ", "")
     if "] " in text and text.startswith("["):
         text = text.split("] ", 1)[1]
